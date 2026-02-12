@@ -1025,7 +1025,7 @@ var Another = {
         // 因此，我们把Something 的行为“混入”到了Another 中。
     }
 };
-Another.cool();
+Another.cool(); // 隐式绑定
 Another.greeting; // "Hello World"
 Another.count; // 1 （count 不是共享状态）
 
@@ -1053,11 +1053,11 @@ myObject.foo = "bar";
 // 3. foo 既出现在myObject 中也出现在myObject 的[[Prototype]] 链上层， 那么就会发生屏蔽。
 //    myObject 中包含的foo 属性会屏蔽原型链上层的所有foo 属性，因为myObject.foo 总是会选择原型链中最底层的foo 属性。
 //*4. foo 不直接存在于myObject 中而是存在于原型链上层时:
-//  *4.1. 如果在[[Prototype]] 链上层存在foo，并且writable:true， 那就会直接在myObject 中添加一个名为foo 的新属性，它是屏蔽属性。
+//  *4.1. 如果在[[Prototype]] 链上层存在foo，并且writable:true， 【那就会直接在myObject 中添加一个名为foo 的新属性，它是屏蔽属性】。
 //   4.2. 如果在[[Prototype]] 链上层存在foo，并且writable:false，那么无法修改已有属性或者在myObject 上创建屏蔽属性。
 //        如果运行在严格模式下，代码会抛出一个错误。否则，这条赋值语句会被忽略。总之，不会发生屏蔽。
-//   4.3. 如果在[[Prototype]] 链上层存在foo 并且它是一个setter，那就一定会调用这个setter。
-//        foo 不会被添加到（或者说屏蔽于）myObject，也不会重新定义foo 这个setter。
+//  *4.3. 如果在[[Prototype]] 链上层存在foo 并且它是一个setter，那就一定会调用这个setter。
+//       【foo 不会被添加到（或者说屏蔽于）myObject，也不会重新定义foo 这个setter】
 
 // 如果你希望在4.2和4.3情况下也屏蔽foo，那就不能使用= 操作符来赋值，而是使用Object.defineProperty(..)来向myObject 添加foo。
 
@@ -1140,7 +1140,9 @@ function Bar(name, label) {
     Foo.call(this, name);
     this.label = label;
 }
-Bar.prototype = Object.create(Foo.prototype); // 这条语句的意思是：“创建一个新的Bar.prototype 对象并把它关联到Foo.prototype”。
+
+// var childFoo = Object.create(Foo); // 创建子类
+Bar.prototype = Object.create(Foo.prototype); // 关联子类。这条语句的意思是：“创建一个新的Bar.prototype 对象并把它关联到Foo.prototype”。
 // 注意！现在没有Bar.prototype.constructor 了
 // 如果你需要这个属性的话可能需要手动修复一下它
 
@@ -1165,7 +1167,7 @@ Object.setPrototypeOf(Bar.prototype, Foo.prototype);
 // 检查“类”关系
 // instanceof 方法只能处理对象和函数之间的关系
 a instanceof Foo; // 在a 的整条[[Prototype]] 链中是否有指向Foo.prototype 的对象
-Foo.prototype.isPrototypeOf(a); // ：在a 的整条[[Prototype]] 链中是否出现过Foo.prototype
+Foo.prototype.isPrototypeOf(a); // 在a 的整条[[Prototype]] 链中是否出现过Foo.prototype
 b.isPrototypeOf(c); // b 是否出现在c 的[[Prototype]] 链中
 
 // 荒谬的代码试图站在“类”的角度使用instanceof 来判断两个对象的关系：用来判断o1 是否关联到（委托）o2 的辅助函数
@@ -1359,7 +1361,7 @@ var Foo = {
     },
     baz: function baz(x) {
         if (x < 10) {
-            return baz(x * 2);
+            return baz(x * 2); //没有 Foo.
         }
         return x;
     }
