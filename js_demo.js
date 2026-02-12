@@ -1,14 +1,7 @@
-function addLogFunction(cls) {
-  cls.prototype.log = function(msg) {
-    console.log(`[${new Date().toISOString()}] ${msg}`);
-  };
-  return cls;
+let z = 100;
+
+function addToZ(x, y) {
+    return x + y + z;
 }
 
-@addLogFunction
-class MyClass {
-  constructor() {}
-}
-
-const myObj = new MyClass();
-myObj.log('hello');
+console.log(addToZ(5, 10)); // Output: 115
