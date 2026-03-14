@@ -468,8 +468,15 @@ var a = null;
 functionName.length; // 声明的参数个数
 
 // JavaScript 中的变量是没有类型的，只有值才有。变量可以随时持有任何类型的值。
-if (typeof FeatureXYZ !== "undefined") {
-    // typeof 的安全防范机制检查，判断变量是否声明
+
+// typeof Undeclared 安全防范机制的用途，例子：顶层的全局变量声明var DEBUG =true 只在debug.js 文件中才有，
+// 而该文件只在开发和测试时才被加载到浏览器，在生产环境中不予加载。
+if (DEBUG) { // 这样会抛出错误
+    console.log("Debugging is starting");
+}
+// 这样是安全的
+if (typeof DEBUG !== "undefined") {
+    console.log("Debugging is starting");
 }
 
 // javascript中数组可以容纳任何类型的值，可以是字符串、数字、对象（object），甚至是其他数组。

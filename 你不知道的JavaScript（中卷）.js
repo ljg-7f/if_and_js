@@ -745,7 +745,7 @@ if (a == true) { // 不要这样用，条件判断不成立
 if (a === true) { // 也不要这样用，条件判断不成立
     // ..
 }
-if (a) { // 这样的显式用法没问题
+if (a) { // 这样的隐式用法没问题
     // ..
 }
 if (!!a) { // 这样的显式用法更好
@@ -843,6 +843,9 @@ false == {}; // false
 // 有一种情况下强制类型转换是绝对安全的，那就是typeof 操作。typeof 总是返回七个字符串之一，其中没有空字符串。
 // 所以在类型检查过程中不会发生隐式强制类型转换。typeof x == "function" 是100% 安全的，和typeof x === "function" 一样。
 
+
+
+
 // 第5 章: 语法
 var obj = {
     a: 42
@@ -852,6 +855,7 @@ delete obj.a; // true
 delete obj.bbb; // true【*】
 obj.a; // undefined
 // delete 操作成功是指对于那些不存在或者存在且可配置的属性，delete 返回true，否则返回false 或者报错。
+// 这样理解：delete 返回 true，该属性肯定就不存在了；如果返回 false，说明该属性还存在。
 
 var a, b, c;
 a = b = c = 42;
@@ -864,7 +868,7 @@ foo: for (var i = 0; i < 4; i++) {
         // 如果j和i相等，继续外层循环
         if (j == i) {
             // 跳转到foo的下一个循环
-            continue foo;
+            continue foo; // 等价于break
         }
         // 跳过奇数结果
         if ((j * i) % 2 == 1) {
@@ -970,7 +974,7 @@ a ? b : (c ? d : e);
 (a ? b : c) ? d : e;
 // 答案是 a ? b : (c ? d : e)
 
-// 有时JavaScript 会自动为代码行补上缺失的分号，即自动分号插入（Automatic SemicolonInsertion，ASI）
+// 有时JavaScript 会自动为代码行补上缺失的分号，即自动分号插入（Automatic Semicolon Insertion，ASI）
 // 建议在所有需要的地方加上分号，将对ASI 的依赖降到最低。毕竟ASI 是一个语法纠错机制。
 
 // 函数参数默认值
@@ -1127,7 +1131,7 @@ ajax("http://some.url.2", bar);
 // 从外部看，由于Promise 封装了依赖于时间的状态——等待底层值的完成或拒绝，所以Promise 本身是与时间无关的。
 // 因此，Promise 可以按照可预测的方式组成（组合），而不用关心时序或底层的结果。另外，一旦Promise 决议，
 // 它就永远保持在这个状态。此时它就成为了不变值（immutablevalue），可以根据需求多次查看。
-// 从另外一个角度看待Promise 的决议：一种在异步任务中作为两个或更多步骤的流程控制机制，时序上的thisthen-that。
+// 从另外一个角度看待Promise 的决议：一种在异步任务中作为两个或更多步骤的流程控制机制，时序上的this-then-that。
 
 // 通过 p instanceof Promise 来检查。但遗憾的是，这并不足以作为检查方法，原因有许多：
 // 其中最主要的是，Promise 值可能是从其他浏览器窗口（iframe 等）接收到的。这个浏览
@@ -1323,7 +1327,9 @@ var p2 = Promise.resolve(rejectedTh);
 // Promise 局限性
 // 单独的Promise 不应该可取消，但是取消一个可序列是合理的，因为你不会像对待Promise那样把序列作为一个单独的不变值来传送。
 
-// 生成器 暂停点的语法 yield
+
+
+// yield 生成器 暂停点的语法
 var x = 1;
 function* foo() {
     x++;
