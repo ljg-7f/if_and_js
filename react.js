@@ -1,5 +1,5 @@
 /**
- *  描述UI
+ *  1.描述UI
  */
 // JSX：javascript xml。
 // JSX and React 是相互独立的 东西。但它们经常一起使用，但你 可以 单独使用它们中的任意一个，JSX 是一种语法扩展，而 React 则是一个 JavaScript 的库。
@@ -100,7 +100,7 @@
 
 
 /**
- *  添加交换
+ *  2.添加交换
  */
 // 事件处理函数，通常将事件处理程序命名为 handle，后接事件名。你会经常看到 onClick={handleClick}，onMouseEnter={handleMouseEnter} 等。
 // 注意不是函数调用：<button onClick={handleClick()}>【错误】
@@ -308,7 +308,7 @@
 
 
 /**
- *  状态管理
+ *  3.状态管理
  */
 // 声明式 UI 与命令式 UI 的比较
 // 声明式UI，在 React 中你需要去描述什么是你想要看到的而非操作 UI 元素。
@@ -365,7 +365,7 @@
 // ***注意不要把组件函数的定义嵌套起来，因为每次渲染时，【都会重新创建一个嵌套函数】，即该嵌套函数的地址会发生变化。
 // 这样在JSX看来树是一致的，但在DOM树上是不一样的，因为组件名称虽然一样，但地址不一样，会导致重新渲染。所以永远要将组件定义在最上层并且不要把它们的定义嵌套起来。
 
-// 重置组件 state 的方法一：将组件渲染在不同位置【下面的方式二】
+// 重置组件 state 的方法1：将组件渲染在不同位置【下面的方式二】
 // 注意下面两种方式在DOM树上是不一样的，方式一：DOM树认为是同一个 Counter，会保留其state；方式二：DOM树认为是渲染在不同的位置的两个Counter，各自独立。
 // 方式一
 // <div>
@@ -388,7 +388,233 @@
 
 // 所以DOM认为相同的组件是：组件名相同 + 组件位置相同 + 组件地址相同
 
-// 重置组件 state 的方法二：使用 key 来重置 state【更加通用】
+// 重置组件 state 的方法2：使用 key 来重置 state【更加通用】
 // 默认情况下，React 使用父组件内部的顺序来区分组件。指定一个 key 能够让 React 将 key 本身而非它们在父组件中的顺序作为位置的一部分。
 
+// <div>
+//     <p><i>提示：你最喜欢的城市？</i></p>
+//     <Form />
+//     <button onClick={() => {
+//         setShowHint(false);
+//     }}>隐藏提示</button>
+// </div>
+
+// 上面的DOM结构和下面的DOM结构中，<Form />组件是位置是一样的（都是第二个子组件），因此Form的state会被保留。
+// 但下面的方式不推荐，因为这种方法特别不明显，并会引入一个风险因素——其他人可能会删除那个 null。
+
+// <div>
+//     {null}
+//     <Form />
+//     <button onClick={() => {
+//     setShowHint(true);
+//     }}>显示提示</button>
+// </div>
+
+// 推荐的方式：【分支合并，让 Form 就总会在相同位置渲染】
+// <div>
+//     {showHint &&
+//     <p><i>提示：你最喜欢的城市？</i></p>
+//     }
+//     <Form key = {showHint}/>
+//     {showHint ? (
+//     <button onClick={() => {
+//         setShowHint(false);
+//     }}>隐藏提示</button>
+//     ) : (
+//     <button onClick={() => {
+//         setShowHint(true);
+//     }}>显示提示</button>
+//     )}
+// </div>
+
+
+// 两个子节点互换位置，对应的key也会互换，各自的state都会被保留，即state也会互换。
+// 即：如果同级节点中有key相同的节点，会复用该节点而不是重新创建。
+
+// 注意key的定义，如果使用 index 作为 key，当顺序调整时会有异常。
+// {displayedContacts.map((contact, i) =>
+//   <li key={i}></li>
+
+
+// 迁移状态逻辑至 Reducer 中【使用 reducer 整合状态逻辑，让复杂的状态管理可优化的更加清晰】
+// 本质：通过状态机的模式来管理，用type来表示，通过dispatch()发送一个 action事件。
+const [tasks, dispatch] = useReducer(tasksReducer, initialTasks);
+// 对应的使用dispatch发送action事件，会在定义的tasksReducer()中接收type进行相应处理。
+function handleAddTask(text) {
+    dispatch({
+        type: 'added',
+        id: nextId++,
+        text: text,
+    });
+}
+
+// 优点：该reducer 函数可以从组件中分离出去。如果有需要，你甚至可以把 reducer 移到一个单独的文件中。
+// 如果你在修改某些组件状态时经常出现问题或者想给组件添加更多逻辑时，我们建议你还是使用 reducer。
+function tasksReducer(tasks, action) {
+    switch (action.type) {
+        case 'added': {
+            return [
+                ...tasks,
+                {
+                    id: action.id,
+                    text: action.text,
+                    done: false,
+                },
+            ];
+        }
+        case 'changed': { }
+        case 'deleted': { }
+        default: { }
+    }
+}
+
+// 使用 Immer 简化 reducer
+const [tasks2, dispatch2] = useImmerReducer(tasksReducer, initialTasks);
+
+// useReducer的模拟实现
+export function useReducer(reducer, initialState) {
+    const [state, setState] = useState(initialState);
+
+    function dispatch(action) {
+        const nextState = reducer(state, action);
+        setState(nextState);
+    }
+
+    return [state, dispatch];
+}
+
+// 学习下面的数据结构：
+export const initialState = {
+    selectedId: 0,
+    messages: {
+        0: 'Hello, Taylor',
+        1: 'Hello, Alice',
+        2: 'Hello, Bob',
+    },
+};
+
+
+// 使用 Context 深层传递参数
+// Context 允许父组件向其下层无论多深的任何组件提供信息，而无需通过 props 显式传递。
+// Context 让父组件可以为它下面的整个组件树提供数据。
+// 创建：
+export const LevelContext = createContext(1);
+// 父组件设置：
+// 这告诉 React：“如果在 <Section> 组件中的任何子组件请求 LevelContext，给他们这个 level。”组件会使用 UI 树中在它上层最近的那个 <LevelContext> 传递过来的值。
+<section className="section">
+    <LevelContext value={level}>
+        {children}
+    </LevelContext>
+</section>
+// 子组件使用：
+const level = useContext(LevelContext); // 注意它的获取跟层级有关，只会获取层级最近的值。
+
+// 提示：在使用 context 之前，先试试传递 props 或者将 JSX 作为 children 传递。避免context过度使用。
+
+
+// 使用 Reducer 和 Context 拓展你的应用
+// Reducer 可以整合组件的状态更新逻辑。Context 可以将信息深入传递给其他组件。你可以组合使用它们来共同管理一个复杂页面的状态。
+// 把 tasks 状态和 dispatch 函数都放入context中。这样，所有的在 TaskApp 组件树之下的组件都不必一直往下传 props 而可以直接读取 tasks 和 dispatch 函数。
+
+// 可以将 reducer 和 context 相关的逻辑移动到单个文件中来进一步整理组件，并导出像 useTasks 和 useTasksDispatch 这样的自定义 Hook。
+// 完整的demo：
+
+const TasksContext = createContext(null);
+const TasksDispatchContext = createContext(null);
+
+export function TasksProvider({ children }) { //对外提供的封装好的组件，封装了reducer和context相关的逻辑
+    const [tasks, dispatch] = useReducer(
+        tasksReducer,
+        initialTasks
+    );
+
+    return (
+        <TasksContext value={tasks}>
+            <TasksDispatchContext value={dispatch}>
+                {children}
+            </TasksDispatchContext>
+        </TasksContext>
+    );
+}
+
+export function useTasks() { // 自定义Hook
+    return useContext(TasksContext);
+}
+
+export function useTasksDispatch() { // 自定义Hook
+    return useContext(TasksDispatchContext);
+}
+
+function tasksReducer(tasks, action) { // 将reducer相关逻辑移动到该文件
+    switch (action.type) {
+        case 'added': {
+            return [...tasks, {
+                id: action.id,
+                text: action.text,
+                done: false
+            }];
+        }
+        case 'changed': {
+            return tasks.map(t => {
+                if (t.id === action.task.id) {
+                    return action.task;
+                } else {
+                    return t;
+                }
+            });
+        }
+        case 'deleted': {
+            return tasks.filter(t => t.id !== action.id);
+        }
+        default: {
+            throw Error('Unknown action: ' + action.type);
+        }
+    }
+}
+
+const initialTasks = [ // 将reducer相关逻辑移动到该文件
+    { id: 0, text: 'Philosopher’s Path', done: true },
+    { id: 1, text: 'Visit the temple', done: false },
+    { id: 2, text: 'Drink matcha', done: false }
+];
+
+
+
+
+/**
+ *  4.脱围机制
+ */
+// 当你希望组件“记住”某些信息，但又不想让这些信息触发新的渲染时，你可以使用 ref 。
+
+// React 内部【useRef 你可以将其视为没有设置函数的常规 state 变量】
+function useRef(initialValue) {
+    const [ref, unused] = useState({ current: initialValue });
+    return ref;
+}
+// 不要在渲染过程中读取或写入 ref.current。如果渲染过程中需要某些信息，请使用 state 代替。由于 React 不知道 ref.current 何时发生变化，
+// 即使在渲染时读取它也会使组件的行为难以预测。（唯一的例外是像 if (!ref.current) ref.current = new Thing() 这样的代码，它只在第一次渲染期间设置一次 ref）
+
+// ref 最常见的用法是访问 DOM 元素。如：<div ref={myRef}>，React 会将相应的 DOM 元素放入 myRef.current 中。当元素从 DOM 中删除时，React 会将 myRef.current 更新为 null。
+
+// state和ref使用的一个经典场景：点击发送，有延迟，用户再进行编辑输入新的文案，如何发送用户编辑的最新消息。
+export default function Chat() {
+    const [text, setText] = useState('');
+    const textRef = useRef(text);
+
+    function handleChange(e) {
+        setText(e.target.value);
+        textRef.current = e.target.value; // 记录最新消息
+    }
+
+    function handleSend() {
+        setTimeout(() => {
+            alert('正在发送：' + textRef.current); // 发送最新消息，如果用 text 则会是旧的，上一次的快照。
+        }, 3000);
+    }
+}
+
+
+// 使用 ref 操作 DOM
+// 有时你可能需要访问由 React 管理的 DOM 元素 —— 例如，让一个节点获得焦点、滚动到它或测量它的尺寸和位置。
+// 在 React 中没有内置的方法来做这些事情，所以你需要一个指向 DOM 节点的 ref 来实现。
 
