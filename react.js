@@ -1,5 +1,5 @@
 /**
- *  描述UI
+ *  1.描述UI
  */
 // JSX：javascript xml。
 // JSX and React 是相互独立的 东西。但它们经常一起使用，但你 可以 单独使用它们中的任意一个，JSX 是一种语法扩展，而 React 则是一个 JavaScript 的库。
@@ -100,7 +100,7 @@
 
 
 /**
- *  添加交换
+ *  2.添加交换
  */
 // 事件处理函数，通常将事件处理程序命名为 handle，后接事件名。你会经常看到 onClick={handleClick}，onMouseEnter={handleMouseEnter} 等。
 // 注意不是函数调用：<button onClick={handleClick()}>【错误】
@@ -186,7 +186,7 @@
 // React 会使 state 的值始终“固定”在一次渲染的各个事件处理函数内部。你无需担心代码运行时 state 是否发生了变化。
 // 调用setState 只会为下次渲染对它进行变更，而不会影响来自上次渲染的事件处理函数。
 
-// React的批处理：React 会在事件处理函数执行完成之后处理 state 更新，这被称为批处理。
+// React的批处理：React 会在事件处理函数执行完成之后处理 state 更新，这被称为批处理。【所以连续多个setXxx不会多次渲染】
 // 这让你可以更新多个 state 变量——甚至来自多个组件的 state 变量——而不会触发太多的 重新渲染。但这也意味着只有在你的事件处理函数及其中任何代码执行完成 之后，UI 才会更新。
 // 这种特性也就是 批处理，它会使你的 React 应用运行得更快。
 
@@ -308,7 +308,7 @@
 
 
 /**
- *  状态管理
+ *  3.状态管理
  */
 // 声明式 UI 与命令式 UI 的比较
 // 声明式UI，在 React 中你需要去描述什么是你想要看到的而非操作 UI 元素。
@@ -365,7 +365,7 @@
 // ***注意不要把组件函数的定义嵌套起来，因为每次渲染时，【都会重新创建一个嵌套函数】，即该嵌套函数的地址会发生变化。
 // 这样在JSX看来树是一致的，但在DOM树上是不一样的，因为组件名称虽然一样，但地址不一样，会导致重新渲染。所以永远要将组件定义在最上层并且不要把它们的定义嵌套起来。
 
-// 重置组件 state 的方法一：将组件渲染在不同位置【下面的方式二】
+// 重置组件 state 的方法1：将组件渲染在不同位置【下面的方式二】
 // 注意下面两种方式在DOM树上是不一样的，方式一：DOM树认为是同一个 Counter，会保留其state；方式二：DOM树认为是渲染在不同的位置的两个Counter，各自独立。
 // 方式一
 // <div>
@@ -388,7 +388,719 @@
 
 // 所以DOM认为相同的组件是：组件名相同 + 组件位置相同 + 组件地址相同
 
-// 重置组件 state 的方法二：使用 key 来重置 state【更加通用】
+// 重置组件 state 的方法2：使用 key 来重置 state【更加通用】
 // 默认情况下，React 使用父组件内部的顺序来区分组件。指定一个 key 能够让 React 将 key 本身而非它们在父组件中的顺序作为位置的一部分。
 
+// <div>
+//     <p><i>提示：你最喜欢的城市？</i></p>
+//     <Form />
+//     <button onClick={() => {
+//         setShowHint(false);
+//     }}>隐藏提示</button>
+// </div>
 
+// 上面的DOM结构和下面的DOM结构中，<Form />组件是位置是一样的（都是第二个子组件），因此Form的state会被保留。
+// 但下面的方式不推荐，因为这种方法特别不明显，并会引入一个风险因素——其他人可能会删除那个 null。
+
+// <div>
+//     {null}
+//     <Form />
+//     <button onClick={() => {
+//     setShowHint(true);
+//     }}>显示提示</button>
+// </div>
+
+// 推荐的方式：【分支合并，让 Form 就总会在相同位置渲染】
+// <div>
+//     {showHint &&
+//     <p><i>提示：你最喜欢的城市？</i></p>
+//     }
+//     <Form key = {showHint}/>
+//     {showHint ? (
+//     <button onClick={() => {
+//         setShowHint(false);
+//     }}>隐藏提示</button>
+//     ) : (
+//     <button onClick={() => {
+//         setShowHint(true);
+//     }}>显示提示</button>
+//     )}
+// </div>
+
+
+// 两个子节点互换位置，对应的key也会互换，各自的state都会被保留，即state也会互换。
+// 即：如果同级节点中有key相同的节点，会复用该节点而不是重新创建。
+
+// 注意key的定义，如果使用 index 作为 key，当顺序调整时会有异常。
+// {displayedContacts.map((contact, i) =>
+//   <li key={i}></li>
+
+
+// 迁移状态逻辑至 Reducer 中【使用 reducer 整合状态逻辑，让复杂的状态管理可优化的更加清晰】
+// 本质：通过状态机的模式来管理，用type来表示，通过dispatch()发送一个 action事件。
+const [tasks, dispatch] = useReducer(tasksReducer, initialTasks);
+// 对应的使用dispatch发送action事件，会在定义的tasksReducer()中接收type进行相应处理。
+function handleAddTask(text) {
+    dispatch({
+        type: 'added',
+        id: nextId++,
+        text: text,
+    });
+}
+
+// 优点：该reducer 函数可以从组件中分离出去。如果有需要，你甚至可以把 reducer 移到一个单独的文件中。
+// 如果你在修改某些组件状态时经常出现问题或者想给组件添加更多逻辑时，我们建议你还是使用 reducer。
+function tasksReducer(tasks, action) {
+    switch (action.type) {
+        case 'added': {
+            return [
+                ...tasks,
+                {
+                    id: action.id,
+                    text: action.text,
+                    done: false,
+                },
+            ];
+        }
+        case 'changed': { }
+        case 'deleted': { }
+        default: { }
+    }
+}
+
+// 使用 Immer 简化 reducer
+const [tasks2, dispatch2] = useImmerReducer(tasksReducer, initialTasks);
+
+// useReducer的模拟实现
+export function useReducer(reducer, initialState) {
+    const [state, setState] = useState(initialState);
+
+    function dispatch(action) {
+        const nextState = reducer(state, action);
+        setState(nextState);
+    }
+
+    return [state, dispatch];
+}
+
+// 学习下面的数据结构：
+export const initialState = {
+    selectedId: 0,
+    messages: {
+        0: 'Hello, Taylor',
+        1: 'Hello, Alice',
+        2: 'Hello, Bob',
+    },
+};
+
+
+// 使用 Context 深层传递参数
+// Context 允许父组件向其下层无论多深的任何组件提供信息，而无需通过 props 显式传递。
+// Context 让父组件可以为它下面的整个组件树提供数据。
+// 创建：
+export const LevelContext = createContext(1);
+// 父组件设置：
+// 这告诉 React：“如果在 <Section> 组件中的任何子组件请求 LevelContext，给他们这个 level。”组件会使用 UI 树中在它上层最近的那个 <LevelContext> 传递过来的值。
+<section className="section">
+    <LevelContext value={level}>
+        {children}
+    </LevelContext>
+</section>
+// 子组件使用：
+const level = useContext(LevelContext); // 注意它的获取跟层级有关，只会获取层级最近的值。
+
+// 提示：在使用 context 之前，先试试传递 props 或者将 JSX 作为 children 传递。避免context过度使用。
+
+
+// 使用 Reducer 和 Context 拓展你的应用
+// Reducer 可以整合组件的状态更新逻辑。Context 可以将信息深入传递给其他组件。你可以组合使用它们来共同管理一个复杂页面的状态。
+// 把 tasks 状态和 dispatch 函数都放入context中。这样，所有的在 TaskApp 组件树之下的组件都不必一直往下传 props 而可以直接读取 tasks 和 dispatch 函数。
+
+// 可以将 reducer 和 context 相关的逻辑移动到单个文件中来进一步整理组件，并导出像 useTasks 和 useTasksDispatch 这样的自定义 Hook。
+// 完整的demo：
+
+const TasksContext = createContext(null);
+const TasksDispatchContext = createContext(null);
+
+export function TasksProvider({ children }) { //对外提供的封装好的组件，封装了reducer和context相关的逻辑
+    const [tasks, dispatch] = useReducer(
+        tasksReducer,
+        initialTasks
+    );
+
+    return (
+        <TasksContext value={tasks}>
+            <TasksDispatchContext value={dispatch}>
+                {children}
+            </TasksDispatchContext>
+        </TasksContext>
+    );
+}
+
+export function useTasks() { // 自定义Hook
+    return useContext(TasksContext);
+}
+
+export function useTasksDispatch() { // 自定义Hook
+    return useContext(TasksDispatchContext);
+}
+
+function tasksReducer(tasks, action) { // 将reducer相关逻辑移动到该文件
+    switch (action.type) {
+        case 'added': {
+            return [...tasks, {
+                id: action.id,
+                text: action.text,
+                done: false
+            }];
+        }
+        case 'changed': {
+            return tasks.map(t => {
+                if (t.id === action.task.id) {
+                    return action.task;
+                } else {
+                    return t;
+                }
+            });
+        }
+        case 'deleted': {
+            return tasks.filter(t => t.id !== action.id);
+        }
+        default: {
+            throw Error('Unknown action: ' + action.type);
+        }
+    }
+}
+
+const initialTasks = [ // 将reducer相关逻辑移动到该文件
+    { id: 0, text: 'Philosopher’s Path', done: true },
+    { id: 1, text: 'Visit the temple', done: false },
+    { id: 2, text: 'Drink matcha', done: false }
+];
+
+
+
+
+/**
+ *  4.脱围机制【默认情况下，组件不暴露其 DOM 节点。 你可以通过使用 ref 属性来暴露 DOM 节点】
+ */
+// 当你希望组件“记住”某些信息，但又不想让这些信息触发新的渲染时，你可以使用 ref 。
+// Refs 是一种脱围机制。你应该只在你必须“跳出 React”时使用它们。这方面的常见示例包括管理焦点、滚动位置或调用 React 未暴露的浏览器 API。
+// 如果你坚持聚焦和滚动等非破坏性操作，应该不会遇到任何问题。但是，如果你尝试手动修改 DOM，则可能会与 React 所做的更改发生冲突。
+// 如使用 ref.current.remove(); 从 DOM 中删除组件，在你手动删除 DOM 元素后，尝试使用 setState 再次显示它会导致崩溃。
+// 这是因为你更改了 DOM，而 React 不知道如何继续正确管理它。
+// 避免更改由 React 管理的 DOM 节点。 对 React 管理的元素进行修改、添加子元素、从中删除子元素会导致不一致的视觉结果，或与上述类似的崩溃。
+
+// 通常，你会将 refs 用于非破坏性操作，例如聚焦、滚动或测量 DOM 元素。
+
+// React 内部【useRef 你可以将其视为没有设置函数的常规 state 变量】
+function useRef(initialValue) {
+    const [ref, unused] = useState({ current: initialValue });
+    return ref;
+}
+// 不要在渲染过程中读取或写入 ref.current。如果渲染过程中需要某些信息，请使用 state 代替。由于 React 不知道 ref.current 何时发生变化，
+// 即使在渲染时读取它也会使组件的行为难以预测。（唯一的例外是像 if (!ref.current) ref.current = new Thing() 这样的代码，它只在第一次渲染期间设置一次 ref）
+
+// ref 最常见的用法是访问 DOM 元素。如：<div ref={myRef}>，React 会将相应的 DOM 元素放入 myRef.current 中。当元素从 DOM 中删除时，React 会将 myRef.current 更新为 null。
+
+// state和ref使用的一个经典场景：点击发送，有延迟，用户再进行编辑输入新的文案，如何发送用户编辑的最新消息。
+export default function Chat() {
+    const [text, setText] = useState('');
+    const textRef = useRef(text);
+
+    function handleChange(e) {
+        setText(e.target.value);
+        textRef.current = e.target.value; // 记录最新消息
+    }
+
+    function handleSend() {
+        setTimeout(() => {
+            alert('正在发送：' + textRef.current); // 发送最新消息，如果用 text 则会是旧的，上一次的快照。
+        }, 3000);
+    }
+}
+
+
+// 使用 ref 操作 DOM
+// 有时你可能需要访问由 React 管理的 DOM 元素 —— 例如，让一个节点获得焦点、滚动到它或测量它的尺寸和位置。
+// 在 React 中没有内置的方法来做这些事情，所以你需要一个指向 DOM 节点的 ref 来实现。
+
+// 如何使用 ref 回调管理 ref 列表 
+
+const itemsRef = useRef(null);
+function scrollToCat(cat) {
+    const map = getMap();
+    const node = map.get(cat);
+    node.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+    });
+}
+
+function getMap() {
+    if (!itemsRef.current) {
+        // 首次运行时初始化 Map。
+        itemsRef.current = new Map();
+    }
+    return itemsRef.current;
+}
+// <ul>
+//     {catList.map((cat) => (
+//     <li
+//         key={cat.id}
+//         ref={(node) => {
+//         const map = getMap();
+//         map.set(cat, node);
+// 
+//         return () => {
+//             map.delete(cat);
+//         };
+//         }}
+//     >
+//         <img src={cat.imageUrl} />
+//     </li>
+//     ))}
+// </ul>
+
+// 访问另一个组件的 DOM 节点：你可以 像其它 prop 一样 将 ref 从父组件传递给子组件。
+// 可以使用 useImperativeHandle 来限制组件对外暴露的功能。
+function MyInput({ ref }) {
+    const realInputRef = useRef(null);
+    useImperativeHandle(ref, () => ({
+        // 只暴露 focus，没有别的
+        focus() {
+            realInputRef.current.focus();
+        },
+    }));
+    return <input ref={realInputRef} />;
+};
+
+// React 何时添加 refs：【React 在提交阶段设置 ref.current】
+// 在 React 中，每次更新都分为 两个阶段：
+// 1.在 渲染 阶段， React 调用你的组件来确定屏幕上应该显示什么。
+// 2.在 提交 阶段， React 把变更应用于 DOM。
+
+// 在第一次渲染期间，DOM 节点尚未创建，因此 ref.current 将为 null。在渲染更新的过程中，DOM 节点还没有更新。所以读取它们还为时过早。
+
+// 用 flushSync 同步更新 state。
+setTodos([...todos, newTodo]);
+listRef.current.lastChild.scrollIntoView();
+// 在 React 中，state 更新是排队进行的。通常，这就是你想要的。但是，在这个示例中会导致问题，因为 setTodos 不会立即更新 DOM。
+// 因此，当你将列表滚动到最后一个元素时，尚未添加待办事项。这就是滚动总是“落后”一项的原因。要解决此问题，你可以强制 React 同步更新（“刷新”）DOM。
+flushSync(() => { // 这将指示 React 当封装在 flushSync 中的代码执行后，立即同步更新 DOM。
+    setTodos([...todos, newTodo]);
+});
+listRef.current.lastChild.scrollIntoView();
+
+
+// Effect【通常 Effect 会在每次 提交 后运行，即会“延迟”一段代码的运行，直到渲染结果反映在页面上】【每个 Effect 描述了一个独立的*同步过程*，可以开始和停止】
+// 使用 Effect 进行同步，Effect 允许你在渲染结束后执行一些代码，以便将组件与 React 外部的某个系统相同步。
+// 不要急着在你的组件中使用 Effect。记住，Effect 通常用于暂时“跳出” React 并与一些 外部 系统进行同步。
+// 这包括浏览器 API、第三方小部件，以及网络等等。如果你的 Effect 只是根据其他状态来调整某些状态，那么 你可能并不需要一个 Effect。
+
+// Effect 应该用于将你的组件与一个 外部 的系统保持同步。如果没有外部系统，你只是想根据其他状态调整一些状态，那么你也许不需要 Effect。
+
+// 每当你的组件渲染时，React 会先更新页面，然后再运行 useEffect 中的代码。换句话说，useEffect 会“延迟”一段代码的运行，直到渲染结果反映在页面上。
+useEffect(() => {
+    // 每次渲染后都会执行此处的代码
+});
+
+useEffect(() => {
+    // 这里的代码只会在组件挂载（首次出现）时运行
+}, []);
+
+// 下面代码之所以不对，是因为它试图在渲染期间对 DOM 节点进行操作。在 React 中，渲染应该是纯粹的计算 JSX，不应该包含任何像修改 DOM 这样的副作用。
+// 而且，当第一次调用 VideoPlayer 时，对应的 DOM 节点还不存在！因为 React 在你返回 JSX 之前不知道要创建什么样的 DOM，所以没有 DOM 节点可以调用 play() 或 pause() 方法。
+// if (isPlaying) {
+//     ref.current.play();  // 渲染期间不能调用 `play()`。 
+// } else {
+//     ref.current.pause(); // 同样，调用 `pause()` 也不行。
+// }
+// 解决办法是使用 useEffect 包裹副作用，把它分离到渲染逻辑的计算过程之外。
+
+// 为什么依赖数组中可以省略 ref? 这是因为 ref 具有 稳定 的标识：React 确保你在 每轮渲染中调用同一个 useRef 时，总能获得相同的对象。
+// ref 不会改变，所以它不会导致重新运行 Effect。useState 返回的 set 函数 也具有稳定的标识，因此它们通常也会被省略。
+
+// 如果 ref 是从父组件传递过来的，则必须在依赖数组中指定它。这很有必要，因为你无法确定父组件是一直传递相同的 ref，还是根据条件传递不同的 ref。
+
+// useEffect中的清理函数，React 会在每次 Effect【重新】运行之前调用清理函数，并在组件卸载（被移除）时最后一次调用清理函数。
+useEffect(() => {
+    const connection = createConnection();
+    connection.connect();
+    return () => { // 清理函数
+        connection.disconnect();
+    };
+}, []);
+
+// tips:某些逻辑应该只在应用启动时运行一次。你可以将它放在组件外部。即放在顶层，与组件函数平级。
+// ***注意：在开发环境中，React 会在组件首次挂载后立即重新挂载一次（组件的 state 与 创建的 DOM 都会被保留）。它可以帮助你找出需要添加清理函数的 Effect，
+// 并在早期暴露类似竞态条件这样的 bug。此外，每当你在开发环境中保存文件时，React 也会重新挂载 Effect。这些行为都仅限于开发环境。
+
+// 获取数据 
+useEffect(() => {
+    let ignore = false;
+
+    async function startFetching() {
+        const json = await fetchTodos(userId);
+        if (!ignore) {
+            setTodos(json);
+        }
+    }
+
+    startFetching();
+
+    return () => {
+        ignore = true;
+    };
+}, [userId]);
+// 你无法“撤销”已经发生的网络请求，但是你的清理函数应当确保那些不再相关的请求不会继续影响你的应用。
+// 如果 userId 从 'Alice' 变为 'Bob'，那么请确保 'Alice' 的响应数据被忽略，即使它在 'Bob' 之后到达。
+// 在开发环境中，你会在浏览器调试工具的“网络”选项卡中看到两条请求。这是正常的。使用上述方法，第一个 Effect 将立即被清理，
+// 所以它的 ignore 变量会被设置为 true。因此，即使有额外的请求，由于有 if (!ignore) 的检查，也不会影响 state。
+// 最好的办法是使用一个能够对请求去重并缓存响应的方案，用map<useid, value>缓存。
+
+// 在 Effect 中进行数据请求的问题：
+// 1.Effect 不会在服务端运行。这意味着最初由服务器渲染的 HTML 只会包含加载状态，而没有实际数据。客户端必须先下载所有的 JavaScript 并渲染应用，
+//   才会发现它需要加载数据，这并不高效。
+// 2.直接在 Effect 中进行数据请求，容易产生“网络瀑布（network waterfall）”。首先父组件渲染时请求一些数据，随后渲染子组件，接着子组件开始请求它们的数据。
+//   如果网络速度不快，这种方式会比并行获取所有数据慢得多。
+// 3.直接在 Effect 中进行数据请求往往无法预加载或缓存数据。例如，如果组件卸载后重新挂载，它必须重新获取数据。
+// 4.不够简洁。编写 fetch 请求时为了避免 竞态条件（race condition） 等问题，会需要很多样板代码。
+
+
+// useEffect 里面可以定义局部函数。
+
+// 每个 Effect 都会“捕获”它对应渲染时的 text 值。即使 text 的值发生了变化，渲染时 text = 'ab' 的 Effect 总是会得到 'ab'。
+// 换句话说，每次渲染的 Effect 都是相互独立的。
+
+// React 使用 Object.is 来比较依赖项的值是否发生了变化。
+
+// 总结：
+// 1.与事件不同，Effect 由渲染本身引起，而非特定的交互。
+// 2.Effect 允许你将组件与某些外部系统（第三方 API、网络等）同步。
+// 3.默认情况下，Effect 在每次渲染（包括初始渲染）后运行。
+// 4.如果所有依赖项都与上一次渲染时相同，React 会跳过本次 Effect。
+// 5.你不能“选择”依赖项，它们是由 Effect 内部的代码所决定的。
+// 6.空的依赖数组（[]）对应于组件的“挂载”，即组件被添加到页面上时。
+// 7.仅在严格模式下的开发环境中，React 会挂载两次组件，以对 Effect 进行压力测试。
+// 8.如果你的 Effect 因为重新挂载而出现问题，那么你需要实现一个清理函数。
+// 9.React 会在 Effect 再次运行之前和在组件卸载时调用你的清理函数。
+
+
+// 你可能不需要 Effect
+// 如果一个值可以基于现有的 props 或 state 计算得出，不要把它作为一个 state，而是在渲染期间直接计算这个值。
+// 这将使你的代码更快（避免了多余的 “级联” 更新）、更简洁（移除了一些代码）以及更少出错（避免了一些因为不同的 state 变量之间没有正确同步而导致的问题）。
+// 使用 useMemo Hook 缓存（或者说 记忆（memoize））一个昂贵的计算。提示：React 编译器 可以自动记忆化昂贵计算，从而减少很多手动调用 useMemo 的场景。
+// 注意：传入 useMemo 的函数会在渲染期间执行，所以它仅适用于 纯函数 场景。
+const visibleTodos = useMemo(() => {
+    // ✅ 除非 todos 或 filter 发生变化，否则不会重新执行
+    return getFilteredTodos(todos, filter);
+}, [todos, filter]);
+
+// 当 props 变化时重置所有 state，使用 key 属性。注意是在该组件被引用的地方给该组件设置 key，而不是在组件内部给根布局设置 key。
+
+// 当 prop 变化时调整部分 state，在渲染期间直接调整 state。
+// 好一些：在渲染期间调整 state
+const [prevItems, setPrevItems] = useState(items);
+if (items !== prevItems) {
+    setPrevItems(items);
+    setSelection(null);
+}
+// 上面的方法不好，因为：存储前序渲染的信息很难理解，但你可以存储已选中的 item ID 而不是存储（并重置）已选中的 item：
+const [selectedId, setSelectedId] = useState(null);
+// ✅ 非常好：在渲染期间计算所需内容
+const selection = items.find(item => item.id === selectedId) ?? null;
+
+
+// 如果某些逻辑必须在 每次应用加载时执行一次，而不是在 每次组件挂载时执行一次，可以添加一个顶层变量来记录它是否已经执行过了：
+// 方法1：useEffect + 顶层变量标记位
+let didInit = false;
+function App() {
+    useEffect(() => {
+        if (!didInit) {
+            didInit = true;
+            // ✅ 只在每次应用加载时执行一次
+            loadDataFromLocalStorage();
+            checkAuthToken();
+        }
+    }, []); // 这里的 [] 不要忘记了
+    // ...
+}
+// 方法2：都放在顶层执行【执行的时机：在模块初始化和应用渲染之前执行它】【会影响组件导入的性能】【不推荐使用，还是推荐封装在App内部】
+if (typeof window !== 'undefined') { // 检测我们是否在浏览器环境
+    // ✅ 只在每次应用加载时执行一次
+    checkAuthToken();
+    loadDataFromLocalStorage();
+}
+function App() {
+    // ...
+}
+// 顶层代码会在组件被导入时执行一次，即使它最终并没有被渲染。为了避免在导入任意组件时降低性能或产生意外行为，请【不要过度】使用这种方法。
+// 将应用级别的初始化逻辑保留在像 App.js 这样的【根组件】模块或你的应用【入口】中。
+
+// 数据从父组件流向子组件。否则当子组件在 Effect 中更新其父组件的 state 时，数据流变得非常难以追踪。
+
+// 订阅外部 store（如：订阅浏览器 API）可以使用React提供的 useSyncExternalStore。
+
+// 实战经验：类似这种<input>频繁更新的组件，最好能将他们拆分为更小的独立的组件，这样只自己刷新不会影响父组件频繁刷新。
+
+
+// 响应式 Effect 的生命周期
+// 每个 Effect 表示一个独立的同步过程。应该考虑这些过程是相同还是独立的。
+
+// ***避免将对象和函数作为依赖项。如果在渲染过程中创建对象和函数，然后在 Effect 中读取它们，它们将在每次渲染时都不同。这将导致 Effect 每次都重新同步。
+// 实战经验：如果组件以将内联函数作为该 prop 的值传递。在这种情况下，每次 App 组件重新渲染时，其值都会不同，因此 Effect 可能会过于频繁地重新同步。
+// 为了避免这种情况，可以传 isEncrypted 布尔值作为 prop 的值，而不是一个函数。在 Effect 内部，根据需要决定使用哪个函数。
+// 解决方案：使用 Effect Event 将对象或函数进行包裹。
+// 例子：
+<ChatRoom
+    roomId={roomId}
+    onReceiveMessage={receivedMessage => {
+        // 这是内联函数，每次都是不同的对象
+    }}
+/>
+
+const onMessage = useEffectEvent(receivedMessage => { // 使用Effect Event进行包裹，不要将 onReceiveMessage 参数作为 Effect 的依赖。
+    onReceiveMessage(receivedMessage);
+});
+
+// 组件内部的所有值（包括 props、state 和组件体内的变量）都是响应式的。任何响应式值都可以在重新渲染时发生变化，所以需要将响应式值包括在 Effect 的依赖项中。
+
+// 全局变量不可以作为 Effect 的依赖项。因为：它可以在 React 渲染数据流之外的任何时间发生变化，更改它不会触发组件的重新渲染。这也违反了 React 的规则，
+// 因为在渲染过程中读取可变数据（即在计算依赖项时）会破坏 纯粹的渲染。相反，【应该使用 useSyncExternalStore 来读取和订阅外部可变值】。
+// ***另外，像 ref.current 或从中读取的值也不能作为依赖项。useRef 返回的 ref 对象本身可以作为依赖项，但其 current 属性是有意可变的。
+// 它允许跟踪某些值而不触发重新渲染。但由于更改它不会触发重新渲染，它不是响应式值，React 不会知道在其更改时重新运行 Effect。
+
+// 注意：组件内部声明的函数(每次渲染时都会被重新定义)【不提倡】，和 Effect 内部声明的函数【提倡】的区别。
+// 所以，你可以编写自己的函数来组织 Effect 中的逻辑。只要将这些函数声明在 Effect 内部，它们就不是响应式值，因此它们也不是 Effect 的依赖。
+
+// 理想情况下，应用程序中的大多数 Effect 最终都应该由自定义 Hook 替代。自定义 Hook 隐藏了同步逻辑，因此调用组件不知道 Effect 的存在。
+
+
+
+// 将事件从 Effect 中分开【useEffectEvent】【本质是将部分依赖逻辑提取出去】
+// 直观上，你可以说事件处理函数总是“手动”触发的，例如点击按钮。另一方面， Effect 是自动触发：每当需要保持同步的时候他们就会开始运行和重新运行。
+// 使用 useEffectEvent 这个特殊的 Hook 从 Effect 中提取非响应式逻辑，即将 Effect 中的非依赖项相关逻辑提取到 useEffectEvent 中。
+// 下面的例子中使用 useEffectEvent 修饰后的 onConnected，被 Effect 引用后不用添加到其依赖中。
+const onConnected = useEffectEvent(() => {
+    showNotification('Connected!', theme);
+});
+useEffect(() => {
+    const connection = createConnection(serverUrl, roomId);
+    connection.on('connected', () => {
+        onConnected();
+    });
+    connection.connect();
+    return () => connection.disconnect();
+}, [roomId]);
+
+// 使用最新参数值
+function ChatRoom({ roomId, theme }) {
+    const onConnected = useEffectEvent((effectRoomId) => {
+        // 注意：传入的参数 effectRoomId 是渲染期间的快照值，存在滞后性。而 roomId 的值是最新的值。
+        showNotification('Welcome to ' + effectRoomId + roomId);
+    });
+
+    useEffect(() => {
+        const connection = createConnection(serverUrl, roomId);
+        connection.on('connected', () => {
+            setTimeout(() => {
+                onConnected(roomId); // 注意：此处的是快照。
+            }, 2000);
+        });
+        connection.connect();
+        return () => connection.disconnect();
+    }, [roomId]);
+    // ...
+}
+
+
+// 你可以将 Effect Event 看成和事件处理函数相似的东西。主要区别是事件处理函数只在响应用户交互的时候运行，而 Effect Event 是你在 Effect 中触发的。
+// Effect Event 让你在 Effect 响应性和不应是响应式的代码间“打破链条”。
+
+// Effect Event 使用注意事项：
+// 1.只在 Effect 内部调用他们。
+// 2.永远不要把他们传给其他的组件或者 Hook。
+
+// 经验：setState 是状态更新工具；useEffect 是副作用管理工具（定时器 / 订阅 / 请求等）
+// setState 不能直接替代 useEffect，但可以用 useRef + 手动控制绕开来替换。最推荐：还是用 useEffect。
+// React 未来方向：useEffect： 只负责副作用生命周期（创建/清理），useEffectEvent：负责“读取最新 state”。
+
+// Effect Event 主要解决的问题是：Effect 想“稳定”【渲染期间始终保持state不变】，但又想“拿最新 state”。它解决的是：“Effect 里混入 Event 逻辑”这个设计错误。
+// useEffectEvent 的真实定位：“从 Effect 内部逃出去的 Event 通道”。你可以理解为：useEffect 在 React 调度世界；useEffectEvent 在用户事件世界。
+
+// Render 是“可打断线程”，可以：暂停 render、丢弃 render、重来 render
+
+
+
+// 移除 Effect 依赖
+// 不必要的依赖可能会导致 Effect 运行过于频繁，甚至产生无限循环。
+// 原则：如果你想改变依赖，首先要改变所涉及到的代码。
+
+// Effect 的功能要独立，不要将逻辑都放在同一个 Effect 中，从而产生更多的依赖。
+
+// 是否在读取一些状态来计算下一个状态。【在setSate的参数中可以获取上一个的值】
+// function useState<S>(initialState: S | (() => S)): [S, Dispatch<SetStateAction<S>>];
+// type SetStateAction<S> = S | ((prevState: S) => S);
+// type Dispatch<A> = (value: A) => void;
+
+function ChatRoom({ roomId }) {
+    const [messages, setMessages] = useState([]);
+    useEffect(() => {
+        const connection = createConnection();
+        connection.connect();
+        connection.on('message', (receivedMessage) => {
+            setMessages([...messages, receivedMessage]);
+        });
+        return () => connection.disconnect();
+    }, [roomId, messages]);
+}
+// 可优化为：
+function ChatRoom({ roomId }) {
+    const [messages, setMessages] = useState([]);
+    useEffect(() => {
+        const connection = createConnection();
+        connection.connect();
+        connection.on('message', (receivedMessage) => {
+            setMessages(msgs => [...msgs, receivedMessage]);
+        });
+        return () => connection.disconnect();
+    }, [roomId]);
+}
+
+
+// 对象和函数作为依赖，会使 Effect 比你需要的更频繁地重新同步。这就是为什么你应该尽可能避免将对象和函数作为 Effect 的依赖。可以做一下尝试进行优化：
+// 1.将静态对象和函数移出组件。如果该对象或函数不依赖于任何 props 和 state，你可以将该对象移到组件之外。
+// 2.将动态对象和函数移动到 Effect 中。如果对象依赖于一些可能因重新渲染而改变的响应式值，那么你不能将它放置于组件外部。你可以在 Effect 内部 创建它。
+// 3.从对象中读取原始值。例子如下：
+<ChatRoom
+    roomId={roomId}
+    options={{ // 每次都是新的对象
+        serverUrl: serverUrl,
+        roomId: roomId
+    }}
+/>
+function ChatRoom({ options }) {
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const connection = createConnection(options);
+        connection.connect();
+        return () => connection.disconnect();
+    }, [options]); // 每次都会进行同步
+}
+// 优化：
+function ChatRoom({ options }) {
+    const [message, setMessage] = useState('');
+
+    const { roomId, serverUrl } = options; // 从 Effect 外部读取对象信息，并避免依赖对象
+    // const { roomId, serverUrl } = getOptions(); // 如果是函数时，可从 Effect 外部调用函数计算原始值，并避免依赖函数
+    useEffect(() => {
+        const connection = createConnection({
+            roomId: roomId,
+            serverUrl: serverUrl
+        });
+        connection.connect();
+        return () => connection.disconnect();
+    }, [roomId, serverUrl]);
+}
+// 缺陷：逻辑有点重复（你从 Effect 外部的对象读取一些值，然后在 Effect 内部创建具有相同值的对象）。但这使得 Effect 实际依赖的信息非常明确。
+
+
+
+// 使用自定义 Hook 复用逻辑
+// 自定义 Hook 共享的是状态逻辑，而不是状态本身。
+// 每当组件重新渲染，自定义 Hook 中的代码就会重新运行。这就是组件和自定义 Hook 都需要是纯函数的原因。我们应该把自定义 Hook 的代码看作组件主体的一部分。
+
+// 什么时候使用自定义 Hook：当你写 Effect 时，考虑一下把它包裹在自定义 Hook 是否更清晰。你不应该经常使用 Effect，所以如果你正在写 Effect 就意味着
+// 你需要“走出 React”和某些外部系统同步，或者需要做一些 React 中没有对应内置 API 的事。把 Effect 包裹进自定义 Hook 可以准确表达你的目标以及数据在里面是如何流动的。
+
+// 例子1：App 组件调用 useCounter，这个 Hook 调用 useInterval 来每秒更新一次计数器。但是 App 组件 也 调用 useInterval 每两秒随机更新一次页面背景色。
+//App.js
+export default function Counter() {
+    const count = useCounter(1000);
+
+    useInterval(() => {
+        const randomColor = `hsla(${Math.random() * 360}, 100%, 50%, 0.2)`;
+        document.body.style.backgroundColor = randomColor;
+    }, 2000);
+
+    return <h1>Seconds passed: {count}</h1>;
+}
+// useCounter.js
+export function useCounter(delay) {
+    const [count, setCount] = useState(0);
+    useInterval(() => {
+        setCount(c => c + 1);
+    }, delay);
+    return count;
+}
+// useInterval.js
+export function useInterval(callback, delay) {
+    const onTick = useEffectEvent(callback);
+    useEffect(() => {
+        const id = setInterval(onTick, delay);
+        return () => clearInterval(id);
+    }, [delay]);
+}
+
+// 例子2：鼠标拖影
+// usePointerPosition.js
+export function usePointerPosition() {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    function handleMove(e) {
+      setPosition({ x: e.clientX, y: e.clientY });
+    }
+    window.addEventListener('pointermove', handleMove);
+    return () => window.removeEventListener('pointermove', handleMove);
+  }, []);
+  return position;
+}
+// App.js
+function useDelayedValue(value, delay) {
+    const [delayedValue, setDelayedValue] = useState(value);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setDelayedValue(value);
+        }, delay);
+    }, [value, delay]);
+
+    return delayedValue;
+}
+
+export default function Canvas() {
+    const pos1 = usePointerPosition();
+    const pos2 = useDelayedValue(pos1, 100);
+    const pos3 = useDelayedValue(pos2, 200);
+    const pos4 = useDelayedValue(pos3, 100);
+    const pos5 = useDelayedValue(pos4, 50);
+    return (
+        <>
+            <Dot position={pos1} opacity={1} />
+            <Dot position={pos2} opacity={0.8} />
+            <Dot position={pos3} opacity={0.6} />
+            <Dot position={pos4} opacity={0.4} />
+            <Dot position={pos5} opacity={0.2} />
+        </>
+    );
+}
+
+function Dot({ position, opacity }) {
+    return (
+        <div style={{
+            position: 'absolute',
+            backgroundColor: 'pink',
+            borderRadius: '50%',
+            opacity,
+            transform: `translate(${position.x}px, ${position.y}px)`,
+            pointerEvents: 'none',
+            left: -20,
+            top: -20,
+            width: 40,
+            height: 40,
+        }} />
+    );
+}
